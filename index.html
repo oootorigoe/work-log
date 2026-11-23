@@ -626,6 +626,13 @@
           <div><span class="section-label" style="margin-right:8px;">総実働</span><strong id="hist-work">0:00</strong></div>
           <div><span class="section-label" style="margin-right:8px;">残業</span><strong id="hist-overtime">0:00</strong></div>
         </div>
+        <div id="hist-project-summary" style="margin-bottom:16px; padding:12px 16px; background:#faf9f6; border:1px solid var(--border); border-radius:var(--radius);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+            <span class="section-label" style="margin:0;">プロジェクト別実績</span>
+            <span id="hist-project-total" style="font-size:0.82rem; color:var(--muted);">合計 0h</span>
+          </div>
+          <div id="hist-project-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -1697,12 +1704,62 @@
       renderHistory();
     }
 
+    function getMonthProjectSummary(data) {
+      if (Array.isArray(data.projectSummary)) return data.projectSummary;
+      const totals = {};
+      (data.records || []).forEach(r => {
+        if (!r.projectText) return;
+        r.projectText.split(' / ').forEach(part => {
+          const m = part.match(/^(.+):\s*([0-9.]+)h$/);
+          if (m) {
+            const name = m[1].trim();
+            const h = parseFloat(m[2]) || 0;
+            if (name && h > 0) totals[name] = (totals[name] || 0) + h;
+          }
+        });
+      });
+      return Object.keys(totals)
+        .map(name => ({ projectName: name, hours: Number(totals[name].toFixed(2)) }))
+        .sort((a, b) => b.hours - a.hours);
+    }
+
+    function renderHistoryProjects(data) {
+      const listEl = document.getElementById('hist-project-list');
+      const totalEl = document.getElementById('hist-project-total');
+      if (!listEl || !totalEl) return;
+      const items = getMonthProjectSummary(data);
+      const totalHours = items.reduce((sum, p) => sum + (Number(p.hours) || 0), 0);
+      totalEl.textContent = `合計 ${Number(totalHours.toFixed(2))}h`;
+
+      if (items.length === 0) {
+        listEl.innerHTML = '<div style="color:var(--muted); font-size:0.82rem;">この月のプロジェクト実績はありません。</div>';
+        return;
+      }
+
+      listEl.innerHTML = items.map(p => {
+        const hours = Number(p.hours) || 0;
+        const pct = totalHours > 0 ? Math.round((hours / totalHours) * 100) : 0;
+        return `
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:0.86rem; margin-bottom:3px; gap:8px;">
+              <span style="font-weight:500;">${escapeHtml(p.projectName)}</span>
+              <span style="font-variant-numeric:tabular-nums;"><strong>${Number(hours.toFixed(2))}h</strong> <span style="color:var(--muted); font-size:0.78rem;">(${pct}%)</span></span>
+            </div>
+            <div style="height:4px; background:#e8e5dc; border-radius:2px; overflow:hidden;">
+              <div style="height:100%; width:${pct}%; background:var(--accent); border-radius:2px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     function renderHistory() {
       const data = state.monthHistory;
       if (!data) return;
       document.getElementById('hist-days').textContent = `${data.summary.days}日`;
       document.getElementById('hist-work').textContent = minToHM(data.summary.workMin);
       document.getElementById('hist-overtime').textContent = minToHM(data.summary.overtimeMin);
+      renderHistoryProjects(data);
 
       const tbody = document.getElementById('history-tbody');
       tbody.innerHTML = '';
