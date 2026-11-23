@@ -1465,28 +1465,31 @@
       }
       toast(action === 'in' ? '出勤しました' : '退勤しました');
 
-      try {
-        const rec = await callGasSilent('punchClock', state.auth.id, state.auth.pin, action, isManual ? manualVal : '');
-        state.todayRecord = rec;
-        if (state.monthHistory && state.monthHistory.records) {
-          const idx = state.monthHistory.records.findIndex(r => r.date === rec.date);
-          if (idx >= 0) state.monthHistory.records[idx] = rec;
-          else state.monthHistory.records.push(rec);
-          let days = 0, workMin = 0, overtimeMin = 0;
-          state.monthHistory.records.forEach(r => {
-            if (r.clockIn) days++;
-            workMin += Number(r.workMinutes) || 0;
-            overtimeMin += Number(r.overtimeMinutes) || 0;
-          });
-          state.monthHistory.summary = { days, workMin, overtimeMin };
+      if (!window._punchQueue) window._punchQueue = Promise.resolve();
+      window._punchQueue = window._punchQueue.then(async () => {
+        try {
+          const rec = await callGasSilent('punchClock', state.auth.id, state.auth.pin, action, isManual ? manualVal : '');
+          state.todayRecord = rec;
+          if (state.monthHistory && state.monthHistory.records) {
+            const idx = state.monthHistory.records.findIndex(r => r.date === rec.date);
+            if (idx >= 0) state.monthHistory.records[idx] = rec;
+            else state.monthHistory.records.push(rec);
+            let days = 0, workMin = 0, overtimeMin = 0;
+            state.monthHistory.records.forEach(r => {
+              if (r.clockIn) days++;
+              workMin += Number(r.workMinutes) || 0;
+              overtimeMin += Number(r.overtimeMinutes) || 0;
+            });
+            state.monthHistory.summary = { days, workMin, overtimeMin };
+          }
+          saveStateCache();
+          renderToday();
+          if (!state.todayProjects || state.todayProjects.length === 0) renderProjectRows();
+        } catch (e) {
+          state.todayRecord = prevRecord;
+          renderToday();
         }
-        saveStateCache();
-        renderToday();
-        if (!state.todayProjects || state.todayProjects.length === 0) renderProjectRows();
-      } catch (e) {
-        state.todayRecord = prevRecord;
-        renderToday();
-      }
+      });
     }
 
     function openTodayEditModal() {
