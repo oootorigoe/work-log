@@ -200,6 +200,18 @@
       border-color: #eceae3;
       cursor: not-allowed;
     }
+    .btn-punch-leave {
+      background: #edf5f0;
+      color: #245c43;
+      border: 1px solid #b7d4c2;
+    }
+    .btn-punch-leave:hover:not(:disabled) { background: #e1efe6; }
+    .btn-punch-leave:disabled {
+      background: #f4f7f5;
+      color: #a4bfb0;
+      border-color: #dde8e1;
+      cursor: not-allowed;
+    }
 
     .manual-box {
       border: 1px dashed var(--border);
@@ -544,7 +556,7 @@
         <div class="punch-grid">
           <button id="btn-in" class="btn-punch btn-punch-primary" onclick="doPunch('in')">出勤</button>
           <button id="btn-out" class="btn-punch btn-punch-primary" onclick="doPunch('out')">退勤</button>
-          <button id="btn-leave" class="btn-punch btn-punch-secondary" onclick="openLeaveModal()">休暇</button>
+          <button id="btn-leave" class="btn-punch btn-punch-leave" onclick="openLeaveModal()">休暇</button>
         </div>
 
         <div class="manual-box">
@@ -584,6 +596,7 @@
             <div class="kv-row"><span class="kv-key">休憩</span><span id="today-break" class="kv-val">0:00</span></div>
             <div class="kv-row"><span class="kv-key">残業</span><span id="today-overtime" class="kv-val">0:00</span></div>
           </div>
+          <button class="text-link" onclick="openTodayEditModal()">本日のメモ・修正 →</button>
         </div>
 
         <!-- 今月 -->
@@ -596,10 +609,7 @@
             <div class="kv-row"><span class="kv-key">有給残</span><span id="leave-paid-rem" class="kv-val">10日</span></div>
             <div class="kv-row"><span class="kv-key">夏休み残</span><span id="leave-summer-rem" class="kv-val">3日</span></div>
           </div>
-          <div style="display:flex; gap:14px; flex-wrap:wrap;">
-            <button class="text-link" onclick="openTodayEditModal()">本日のメモ・修正 →</button>
-            <button class="text-link" onclick="openLeaveModal()">休暇を登録 →</button>
-          </div>
+          <button class="text-link" onclick="openLeaveModal()">休暇を登録 →</button>
         </div>
       </div>
     </div>
@@ -1538,6 +1548,7 @@
     function renderProjectRows() {
       const container = document.getElementById('project-rows');
       container.innerHTML = '';
+      state.projectsSaved = state.todayProjects.length > 0;
       const list = state.todayProjects.length > 0
         ? state.todayProjects
         : [{ projectName: getDefaultMainProject(), hours: getDefaultProjectHours() }];
@@ -1545,8 +1556,14 @@
       updateProjectDiff();
     }
 
+    function markProjectsDirty() {
+      state.projectsSaved = false;
+      updateProjectDiff();
+    }
+
     function addProjectRow() {
       appendProjectRowEl('', '');
+      markProjectsDirty();
     }
 
     function appendProjectRowEl(selectedName, hoursVal) {
@@ -1557,6 +1574,7 @@
       const sel = document.createElement('select');
       sel.className = 'form-control proj-select';
       sel.style.flex = '1';
+      sel.onchange = markProjectsDirty;
       const emptyOpt = document.createElement('option');
       emptyOpt.value = '';
       emptyOpt.textContent = 'プロジェクトを選択';
@@ -1596,7 +1614,7 @@
         extraOpt.selected = true;
         inp.appendChild(extraOpt);
       }
-      inp.onchange = updateProjectDiff;
+      inp.onchange = markProjectsDirty;
 
       const unit = document.createElement('span');
       unit.textContent = '時間';
@@ -1607,7 +1625,7 @@
       delBtn.className = 'btn btn-outline btn-sm';
       delBtn.textContent = '×';
       delBtn.style.padding = '7px 11px';
-      delBtn.onclick = () => { div.remove(); updateProjectDiff(); };
+      delBtn.onclick = () => { div.remove(); markProjectsDirty(); };
 
       div.appendChild(sel);
       div.appendChild(inp);
@@ -1630,11 +1648,18 @@
       if (!rec || !rec.clockIn) {
         diffEl.textContent = '出勤すると実働時間との差が表示されます。';
         saveBtn.disabled = true;
+        saveBtn.textContent = '保存';
       } else {
         const workH = rec.workMinutes / 60;
         const diff = (totalProj - workH).toFixed(2);
         diffEl.textContent = `実働 ${workH.toFixed(2)} 時間との差: ${diff} 時間`;
-        saveBtn.disabled = false;
+        if (state.projectsSaved) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = '保存済み ✓';
+        } else {
+          saveBtn.disabled = false;
+          saveBtn.textContent = '保存';
+        }
       }
     }
 
@@ -1647,6 +1672,8 @@
       });
       const prevProjects = state.todayProjects ? JSON.parse(JSON.stringify(state.todayProjects)) : [];
       state.todayProjects = items.map(x => ({ projectName: x.projectName, hours: Number(x.hours) }));
+      state.projectsSaved = true;
+      updateProjectDiff();
       saveStateCache();
       toast('勤務実績を保存しました');
 
@@ -1655,6 +1682,7 @@
         saveStateCache();
       } catch (e) {
         state.todayProjects = prevProjects;
+        state.projectsSaved = false;
         renderProjectRows();
       }
     }
