@@ -507,7 +507,7 @@
   <!-- メイン画面 -->
   <div id="app-view" class="container hidden">
     <div class="header">
-      <div style="display:flex; flex-direction:column; gap:2px;">
+      <div onclick="goHome()" title="トップへ戻る" style="display:flex; flex-direction:column; gap:2px; cursor:pointer;">
         <svg width="58" height="18" viewBox="0 0 180 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="OOO" style="display: block;">
           <circle cx="28" cy="28" r="21" stroke="#1f1e1b" stroke-width="11"/>
           <circle cx="90" cy="28" r="21" stroke="#1f1e1b" stroke-width="11"/>
@@ -1328,6 +1328,19 @@
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('kintai_state_cache_v1');
       location.reload();
+    }
+
+    function goHome() {
+      if (!state.user) return;
+      ['edit-modal', 'admin-detail-modal', 'staff-modal', 'leave-modal', 'pdf-modal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+      if (state.user.isAdmin) {
+        switchTab('admin', document.getElementById('tab-btn-admin'));
+      } else {
+        switchTab('punch', document.getElementById('tab-btn-punch'));
+      }
     }
 
     function switchTab(tabName, btn) {
