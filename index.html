@@ -1186,16 +1186,42 @@
       await loadLoginStaffList();
     });
 
-    async function loadLoginStaffList() {
-      const list = await callGas('getPublicStaffList');
+    function renderStaffOptions(list) {
       const sel = document.getElementById('login-staff');
+      const prev = sel.value;
       sel.innerHTML = '';
       list.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
         opt.textContent = s.name;
+        if (s.id === prev) opt.selected = true;
         sel.appendChild(opt);
       });
+    }
+
+    async function loadLoginStaffList() {
+      const cacheKey = 'kintai_staff_list_cache_v1';
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          renderStaffOptions(JSON.parse(cached));
+          // 裏でサイレント更新（通信中オーバーレイを出さない）
+          if (API_URL && !API_URL.includes('ここに')) {
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getPublicStaffList', args: [] }) })
+              .then(r => r.json())
+              .then(j => {
+                if (j.ok && Array.isArray(j.data)) {
+                  localStorage.setItem(cacheKey, JSON.stringify(j.data));
+                  renderStaffOptions(j.data);
+                }
+              }).catch(() => {});
+            return;
+          }
+        } catch (e) {}
+      }
+      const list = await callGas('getPublicStaffList');
+      localStorage.setItem(cacheKey, JSON.stringify(list));
+      renderStaffOptions(list);
     }
 
     async function handleLogin() {
