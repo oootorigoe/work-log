@@ -1184,21 +1184,7 @@
         try {
           const parsed = JSON.parse(saved);
           if (parsed.id && parsed.pin) {
-            const cachedStateStr = localStorage.getItem('kintai_state_cache_v1');
-            let renderedFromCache = false;
-            if (cachedStateStr) {
-              try {
-                const c = JSON.parse(cachedStateStr);
-                const nowD = new Date();
-                const todayLocal = `${nowD.getFullYear()}-${('0' + (nowD.getMonth() + 1)).slice(-2)}-${('0' + nowD.getDate()).slice(-2)}`;
-                if (c && c.auth && c.auth.id === parsed.id && c.today === todayLocal && c.user && !c.user.isAdmin) {
-                  Object.assign(state, c);
-                  applyLoginView(c);
-                  renderedFromCache = true;
-                }
-              } catch (e) {}
-            }
-            await performLogin(parsed.id, parsed.pin, true, renderedFromCache);
+            await performLogin(parsed.id, parsed.pin, true, false);
             return;
           }
         } catch (e) {
@@ -1482,7 +1468,11 @@
       window._punchQueue = window._punchQueue.then(async () => {
         try {
           const rec = await callGasSilent('punchClock', state.auth.id, state.auth.pin, action, isManual ? manualVal : '');
-          state.todayRecord = rec;
+          // すでに画面が「退勤済」に進んでいるのに、古い「出勤」の返答で上書きしない
+          if (!(state.todayRecord && state.todayRecord.clockOut && !rec.clockOut)) {
+            state.todayRecord = rec;
+            renderToday();
+          }
           if (state.monthHistory && state.monthHistory.records) {
             const idx = state.monthHistory.records.findIndex(r => r.date === rec.date);
             if (idx >= 0) state.monthHistory.records[idx] = rec;
@@ -1496,8 +1486,6 @@
             state.monthHistory.summary = { days, workMin, overtimeMin };
           }
           saveStateCache();
-          renderToday();
-          if (!state.todayProjects || state.todayProjects.length === 0) renderProjectRows();
         } catch (e) {
           state.todayRecord = prevRecord;
           renderToday();
