@@ -969,16 +969,24 @@
     };
 
     async function callGas(fnName, ...args) {
+      return _callGasCore(true, fnName, ...args);
+    }
+
+    async function callGasSilent(fnName, ...args) {
+      return _callGasCore(false, fnName, ...args);
+    }
+
+    async function _callGasCore(withOverlay, fnName, ...args) {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
-        showLoading(true);
+        if (withOverlay) showLoading(true);
         return new Promise((resolve, reject) => {
           google.script.run
             .withSuccessHandler(res => {
-              showLoading(false);
+              if (withOverlay) showLoading(false);
               resolve(res);
             })
             .withFailureHandler(err => {
-              showLoading(false);
+              if (withOverlay) showLoading(false);
               const msg = err && err.message ? err.message : String(err);
               toast(msg);
               reject(err);
@@ -991,7 +999,7 @@
         throw new Error('API_URL 未設定');
       }
 
-      showLoading(true);
+      if (withOverlay) showLoading(true);
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
@@ -1007,7 +1015,7 @@
         toast(msg);
         throw err;
       } finally {
-        showLoading(false);
+        if (withOverlay) showLoading(false);
       }
     }
 
@@ -1176,7 +1184,21 @@
         try {
           const parsed = JSON.parse(saved);
           if (parsed.id && parsed.pin) {
-            await performLogin(parsed.id, parsed.pin, true);
+            const cachedStateStr = localStorage.getItem('kintai_state_cache_v1');
+            let renderedFromCache = false;
+            if (cachedStateStr) {
+              try {
+                const c = JSON.parse(cachedStateStr);
+                const nowD = new Date();
+                const todayLocal = `${nowD.getFullYear()}-${('0' + (nowD.getMonth() + 1)).slice(-2)}-${('0' + nowD.getDate()).slice(-2)}`;
+                if (c && c.auth && c.auth.id === parsed.id && c.today === todayLocal && c.user && !c.user.isAdmin) {
+                  Object.assign(state, c);
+                  applyLoginView(c);
+                  renderedFromCache = true;
+                }
+              } catch (e) {}
+            }
+            await performLogin(parsed.id, parsed.pin, true, renderedFromCache);
             return;
           }
         } catch (e) {
@@ -1234,9 +1256,51 @@
       await performLogin(id, pin, false);
     }
 
-    async function performLogin(id, pin, isAuto) {
+    function applyLoginView(data) {
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('app-view').classList.remove('hidden');
+
+      document.getElementById('header-user-name').textContent = `${data.user.name} さん`;
+      document.getElementById('tab-btn-punch').classList.toggle('hidden', data.user.isAdmin);
+      document.getElementById('tab-btn-history').classList.toggle('hidden', data.user.isAdmin);
+      document.getElementById('tab-btn-admin').classList.toggle('hidden', !data.user.isAdmin);
+
+      document.getElementById('history-month').value = data.currentMonth;
+      document.getElementById('admin-month').value = data.currentMonth;
+
+      if (data.user.isAdmin) {
+        switchTab('admin', document.getElementById('tab-btn-admin'));
+      } else {
+        switchTab('punch', document.getElementById('tab-btn-punch'));
+        renderToday();
+        renderProjectRows();
+        renderHistory();
+      }
+    }
+
+    function saveStateCache() {
       try {
-        const data = await callGas('loginAndGetInitialData', id, pin, !isAuto);
+        if (state.user && !state.user.isAdmin) {
+          localStorage.setItem('kintai_state_cache_v1', JSON.stringify({
+            auth: state.auth,
+            user: state.user,
+            today: state.today,
+            currentMonth: state.currentMonth,
+            todayRecord: state.todayRecord,
+            projects: state.projects,
+            todayProjects: state.todayProjects,
+            monthHistory: state.monthHistory,
+            leaveSummary: state.leaveSummary,
+            standardHours: state.standardHours,
+          }));
+        }
+      } catch (e) {}
+    }
+
+    async function performLogin(id, pin, isAuto, isSilent) {
+      try {
+        const fn = isSilent ? callGasSilent : callGas;
+        const data = await fn('loginAndGetInitialData', id, pin, !isAuto);
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ id, pin }));
         state.auth = { id, pin };
         state.user = data.user;
@@ -1249,28 +1313,12 @@
         state.leaveSummary = data.leaveSummary;
         state.standardHours = data.standardHours || 8;
 
-        document.getElementById('login-view').classList.add('hidden');
-        document.getElementById('app-view').classList.remove('hidden');
-
-        document.getElementById('header-user-name').textContent = `${data.user.name} さん`;
-        document.getElementById('tab-btn-punch').classList.toggle('hidden', data.user.isAdmin);
-        document.getElementById('tab-btn-history').classList.toggle('hidden', data.user.isAdmin);
-        document.getElementById('tab-btn-admin').classList.toggle('hidden', !data.user.isAdmin);
-
-        document.getElementById('history-month').value = data.currentMonth;
-        document.getElementById('admin-month').value = data.currentMonth;
-
-        if (data.user.isAdmin) {
-          switchTab('admin', document.getElementById('tab-btn-admin'));
-        } else {
-          switchTab('punch', document.getElementById('tab-btn-punch'));
-          renderToday();
-          renderProjectRows();
-          renderHistory();
-        }
+        saveStateCache();
+        applyLoginView(data);
       } catch (e) {
-        if (isAuto) {
+        if (isAuto && !isSilent) {
           localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem('kintai_state_cache_v1');
           await loadLoginStaffList();
         }
       }
@@ -1278,6 +1326,7 @@
 
     function handleLogout() {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('kintai_state_cache_v1');
       location.reload();
     }
 
@@ -1288,7 +1337,14 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
 
-      if (tabName === 'history') loadMonthHistory();
+      if (tabName === 'history') {
+        const hm = document.getElementById('history-month').value;
+        if (state.monthHistory && hm === state.currentMonth) {
+          renderHistory();
+        } else {
+          loadMonthHistory();
+        }
+      }
       if (tabName === 'admin') loadAdminData();
     }
 
@@ -1376,30 +1432,61 @@
         toast('手入力の時刻を指定してください');
         return;
       }
-      const rec = await callGas('punchClock', state.auth.id, state.auth.pin, action, isManual ? manualVal : '');
-      state.todayRecord = rec;
+
+      const prevRecord = state.todayRecord ? JSON.parse(JSON.stringify(state.todayRecord)) : null;
+      const nowD = new Date();
+      const timeNow = manualVal || `${('0' + nowD.getHours()).slice(-2)}:${('0' + nowD.getMinutes()).slice(-2)}`;
+
+      // 即座に画面を切り替え（オプティミスティックUI）
+      const tempRec = prevRecord ? JSON.parse(JSON.stringify(prevRecord)) : {
+        date: state.today, staffId: state.user.id, staffName: state.user.name,
+        clockIn: '', clockOut: '', break1Start: '', break1End: '', break2Start: '', break2End: '',
+        workMinutes: 0, overtimeMinutes: 0, manualFlag: isManual ? '手入力' : '', memo: ''
+      };
+      if (action === 'in') tempRec.clockIn = timeNow;
+      if (action === 'out') {
+        tempRec.clockOut = timeNow;
+        const inM = timeToMin(tempRec.clockIn);
+        const outM = timeToMin(tempRec.clockOut);
+        if (inM !== null && outM !== null) {
+          let span = outM - inM;
+          if (span < 0) span += 24 * 60;
+          const bM = calcBreakMinutes(tempRec);
+          tempRec.workMinutes = Math.max(0, span - bM);
+          tempRec.overtimeMinutes = Math.max(0, tempRec.workMinutes - (state.standardHours || 8) * 60);
+        }
+      }
+      state.todayRecord = tempRec;
       document.getElementById('manual-check').checked = false;
       document.getElementById('manual-time').disabled = true;
-      if (state.monthHistory && state.monthHistory.records) {
-        const idx = state.monthHistory.records.findIndex(r => r.date === rec.date);
-        if (idx >= 0) {
-          state.monthHistory.records[idx] = rec;
-        } else {
-          state.monthHistory.records.push(rec);
-        }
-        let days = 0, workMin = 0, overtimeMin = 0;
-        state.monthHistory.records.forEach(r => {
-          if (r.clockIn) days++;
-          workMin += Number(r.workMinutes) || 0;
-          overtimeMin += Number(r.overtimeMinutes) || 0;
-        });
-        state.monthHistory.summary = { days, workMin, overtimeMin };
-      }
       renderToday();
       if (!state.todayProjects || state.todayProjects.length === 0) {
         renderProjectRows();
       }
-      toast('打刻しました');
+      toast(action === 'in' ? '出勤しました' : '退勤しました');
+
+      try {
+        const rec = await callGasSilent('punchClock', state.auth.id, state.auth.pin, action, isManual ? manualVal : '');
+        state.todayRecord = rec;
+        if (state.monthHistory && state.monthHistory.records) {
+          const idx = state.monthHistory.records.findIndex(r => r.date === rec.date);
+          if (idx >= 0) state.monthHistory.records[idx] = rec;
+          else state.monthHistory.records.push(rec);
+          let days = 0, workMin = 0, overtimeMin = 0;
+          state.monthHistory.records.forEach(r => {
+            if (r.clockIn) days++;
+            workMin += Number(r.workMinutes) || 0;
+            overtimeMin += Number(r.overtimeMinutes) || 0;
+          });
+          state.monthHistory.summary = { days, workMin, overtimeMin };
+        }
+        saveStateCache();
+        renderToday();
+        if (!state.todayProjects || state.todayProjects.length === 0) renderProjectRows();
+      } catch (e) {
+        state.todayRecord = prevRecord;
+        renderToday();
+      }
     }
 
     function openTodayEditModal() {
@@ -1554,9 +1641,18 @@
         const hours = row.querySelector('.proj-hours').value;
         if (name && hours) items.push({ projectName: name, hours });
       });
-      state.todayProjects = await callGas('saveDayProjects', state.auth.id, state.auth.pin, state.today, items);
-      renderProjectRows();
+      const prevProjects = state.todayProjects ? JSON.parse(JSON.stringify(state.todayProjects)) : [];
+      state.todayProjects = items.map(x => ({ projectName: x.projectName, hours: Number(x.hours) }));
+      saveStateCache();
       toast('勤務実績を保存しました');
+
+      try {
+        state.todayProjects = await callGasSilent('saveDayProjects', state.auth.id, state.auth.pin, state.today, items);
+        saveStateCache();
+      } catch (e) {
+        state.todayProjects = prevProjects;
+        renderProjectRows();
+      }
     }
 
     // ==========================================
