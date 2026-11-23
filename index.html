@@ -1210,7 +1210,7 @@
 
     async function performLogin(id, pin, isAuto) {
       try {
-        const data = await callGas('loginAndGetInitialData', id, pin);
+        const data = await callGas('loginAndGetInitialData', id, pin, !isAuto);
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ id, pin }));
         state.auth = { id, pin };
         state.user = data.user;
