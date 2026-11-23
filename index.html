@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WORK LOG</title>
+  <style>
+    :root {
+      --bg: #f6f5f0;
+      --card: #ffffff;
+      --text: #1f1e1b;
+      --muted: #78756e;
+      --border: #e5e3dc;
+      --dark: #262420;
+      --dark-hover: #3b3832;
+      --disabled-bg: #bfbeb8;
+      --accent: #a84323;
+      --tab-active: #efede6;
+      --radius: 3px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px 24px 60px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    h1, h2, h3 { margin: 0 0 12px; font-weight: 700; }
+    h2 { font-size: 1rem; }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .user-name-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .logout-link {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      text-decoration: underline;
+    }
+    .logout-link:hover { color: var(--text); }
+
+    /* Segmented Tabs */
+    .tabs {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .tab-btn {
+      padding: 7px 16px;
+      border: none;
+      border-right: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .tab-btn:last-child { border-right: none; }
+    .tab-btn.active {
+      background: var(--tab-active);
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* 2-Column Punch Layout */
+    .punch-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .container { padding: 14px 14px 50px; }
+      .punch-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Left Column: Clock & Buttons */
+    .clock-display {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .clock-hm {
+      font-size: 3.6rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1.05;
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .clock-sec {
+      font-size: 1.25rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .clock-date {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #faf9f6;
+      font-size: 0.82rem;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #9ca3af;
+    }
+    .dot-gray { background: #9ca3af; }
+    .dot-green { background: #16a34a; }
+    .dot-yellow { background: #d97706; }
+    .dot-blue { background: #2563eb; }
+
+    .punch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .btn-punch {
+      padding: 14px 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-punch-primary {
+      background: var(--dark);
+      color: #fff;
+      border: 1px solid var(--dark);
+    }
+    .btn-punch-primary:hover:not(:disabled) { background: var(--dark-hover); }
+    .btn-punch-primary:disabled {
+      background: var(--disabled-bg);
+      border-color: var(--disabled-bg);
+      color: #fff;
+      cursor: not-allowed;
+    }
+    .btn-punch-secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-punch-secondary:hover:not(:disabled) { background: #f8f7f3; }
+    .btn-punch-secondary:disabled {
+      color: #c2c0b8;
+      border-color: #eceae3;
+      cursor: not-allowed;
+    }
+
+    .manual-box {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 18px 0 14px;
+    }
+    .section-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .today-log-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* Right Column: Stats & Projects */
+    .big-stat {
+      font-size: 1.95rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      margin-bottom: 12px;
+      line-height: 1.1;
+    }
+    .kv-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.86rem;
+    }
+    .kv-row {
+      display: flex;
+      align-items: center;
+    }
+    .kv-key {
+      width: 82px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .kv-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .text-link {
+      display: inline-block;
+      margin-top: 14px;
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .text-link:hover { text-decoration: underline; }
+
+    /* Buttons & Inputs */
+    button, input, select {
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 16px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn:disabled {
+      background: var(--disabled-bg) !important;
+      border-color: var(--disabled-bg) !important;
+      color: #fff !important;
+      cursor: not-allowed;
+    }
+    .btn-primary { background: var(--dark); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--dark-hover); }
+    .btn-outline { background: #fff; border-color: var(--border); color: var(--text); }
+    .btn-outline:hover:not(:disabled) { background: #f8f7f3; }
+    .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
+
+    .form-group { margin-bottom: 12px; }
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .col { flex: 1; min-width: 130px; }
+
+    .proj-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .proj-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+    .proj-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Badges & Tables */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: var(--radius);
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+    .badge-gray { background: #efede6; color: var(--muted); }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      white-space: nowrap;
+    }
+    th { color: var(--muted); font-weight: 600; font-size: 0.78rem; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(31,30,27,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .hidden { display: none !important; }
+
+    /* Loading & Toast */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(246,245,240,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      font-weight: 700;
+      color: var(--text);
+    }
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--dark);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      z-index: 300;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    }
+
+    /* PDF / Print */
+    #print-area { display: none; }
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      #login-view, #app-view, .modal-backdrop, #loading-overlay, #toast {
+        display: none !important;
+      }
+      #print-area {
+        display: block !important;
+        padding: 10px 16px;
+        font-size: 11px;
+      }
+      .print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        border-bottom: 2px solid #262420;
+        padding-bottom: 6px;
+        margin-bottom: 14px;
+      }
+      .print-title { font-size: 16px; font-weight: 700; }
+      .print-meta { font-size: 10px; color: #555; }
+      .print-section-title {
+        font-size: 13px;
+        font-weight: 700;
+        margin: 16px 0 6px;
+        padding-left: 6px;
+        border-left: 3px solid #262420;
+      }
+      .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 14px;
+        font-size: 10.5px;
+      }
+      .print-table th, .print-table td {
+        border: 1px solid #ccc;
+        padding: 5px 7px;
+        text-align: left;
+        white-space: normal;
+      }
+      .print-table th { background: #f3f2ed !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .print-page-break { page-break-before: always; }
+      tr.row-holiday td { background: #fef2f2 !important; color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    tr.row-holiday td { background: #fef2f2; }
+    tr.row-holiday td.date-cell { color: #b91c1c; font-weight: 600; }
+    .holiday-text { color: #b91c1c !important; font-weight: 600; }
+
+    @media (max-width: 768px) {
+      .container { padding: 10px 12px 40px; }
+      .header { margin-bottom: 10px; gap: 6px; }
+      .card { padding: 14px 16px; margin-bottom: 10px; }
+      .punch-layout { gap: 10px; }
+      .clock-hm { font-size: 2.3rem; }
+      .clock-sec { font-size: 0.95rem; }
+      .clock-date { font-size: 0.78rem; margin-bottom: 8px; }
+      .status-pill { padding: 2px 10px; font-size: 0.75rem; margin-bottom: 10px; }
+      .punch-grid { gap: 8px; margin-bottom: 10px; }
+      .btn-punch { padding: 10px 8px; font-size: 0.9rem; }
+      .manual-box { padding: 8px 10px; margin-bottom: 10px; font-size: 0.8rem; }
+      .divider { margin: 10px 0 8px; }
+      .section-label { margin-bottom: 4px; }
+      .today-log-text { font-size: 0.78rem; line-height: 1.45; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-overlay" class="hidden">通信中...</div>
+  <div id="toast" class="hidden"></div>
+
+  <!-- ログイン画面 -->
+  <div id="login-view" class="container" style="max-width: 420px; margin-top: 52px;">
+    <div class="card" style="padding: 36px 24px 44px;">
+      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;">
+        <svg width="92" height="28" viewBox="0 0 180 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="OOO" style="display: block; margin-bottom: 12px;">
+          <circle cx="28" cy="28" r="21" stroke="#1f1e1b" stroke-width="11"/>
+          <circle cx="90" cy="28" r="21" stroke="#1f1e1b" stroke-width="11"/>
+          <circle cx="152" cy="28" r="21" stroke="#1f1e1b" stroke-width="11"/>
+        </svg>
+        <h1 style="font-size: 1.95rem; line-height: 1; margin: 0; letter-spacing: 0.04em;">WORK LOG</h1>
+        <p style="color: var(--muted); font-size: 0.68rem; line-height: 1.3; margin: 14px 0 0 0;">
+          出退勤・勤務実績管理システム
+        </p>
+      </div>
+      <div class="form-group">
+        <label>スタッフ名</label>
+        <select id="login-staff" class="form-control"></select>
+      </div>
+      <div class="form-group">
+        <label>PIN（4桁）</label>
+        <input id="login-pin" type="password" inputmode="numeric" maxlength="4" class="form-control" placeholder="例: 0000">
+      </div>
+      <button id="login-btn" class="btn btn-primary" style="width: 100%; margin-top: 12px;" onclick="handleLogin()">ログイン</button>
+    </div>
+  </div>
+
+  <!-- メイン画面 -->
+  <div id="app-view" class="container hidden">
+    <div class="header">
+      <div style="display:flex; flex-direction:column; gap:2px;">
+        <svg width="58" height="18" viewBox="0 0 180 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="OOO" style="display: block;">
+          <circle cx="28" cy="28" r="21" stroke="#1f1e1b" stroke-width="11"/>
+          <circle cx="90" cy="28" r="21" stroke="#1f1e1b" stroke-width="11"/>
+          <circle cx="152" cy="28" r="21" stroke="#1f1e1b" stroke-width="11"/>
+        </svg>
+        <div class="header-title" style="letter-spacing: 0.04em;">WORK LOG</div>
+      </div>
+      <div class="header-right">
+        <span id="header-user-name" class="user-name-label"></span>
+        <div class="tabs">
+          <button id="tab-btn-punch" class="tab-btn active" onclick="switchTab('punch', this)">打刻</button>
+          <button id="tab-btn-history" class="tab-btn" onclick="switchTab('history', this)">履歴</button>
+          <button id="tab-btn-admin" class="tab-btn hidden" onclick="switchTab('admin', this)">管理</button>
+        </div>
+        <button class="logout-link" onclick="handleLogout()">ログアウト</button>
+      </div>
+    </div>
+
+    <!-- タブ1: 打刻（2カラム） -->
+    <div id="tab-punch" class="punch-layout">
+      <!-- 左カラム -->
+      <div class="card">
+        <div class="clock-display">
+          <span id="clock-hm" class="clock-hm">--:--</span>
+          <span id="clock-sec" class="clock-sec">:--</span>
+        </div>
+        <div id="clock-date" class="clock-date">----年--月--日（-）</div>
+
+        <div class="status-pill">
+          <span id="status-dot" class="status-dot dot-gray"></span>
+          <span id="status-text">未出勤</span>
+        </div>
+
+        <div class="punch-grid">
+          <button id="btn-in" class="btn-punch btn-punch-primary" onclick="doPunch('in')">出勤</button>
+          <button id="btn-out" class="btn-punch btn-punch-primary" onclick="doPunch('out')">退勤</button>
+          <button id="btn-leave" class="btn-punch btn-punch-secondary" onclick="openLeaveModal()">休暇</button>
+        </div>
+
+        <div class="manual-box">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="manual-check" onchange="toggleManualTime()">
+            時刻を手入力して打刻
+          </label>
+          <input type="time" id="manual-time" class="form-control" style="width: 110px;" disabled>
+        </div>
+
+        <hr class="divider">
+        <div class="section-label">本日の打刻</div>
+        <div id="today-log-detail" class="today-log-text">まだ打刻はありません。</div>
+      </div>
+
+      <!-- 右カラム -->
+      <div>
+        <!-- WORK LOG（プロジェクト別） -->
+        <div class="card">
+          <div style="font-size: 1.95rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text); margin-bottom: 12px;">WORK LOG</div>
+          <div id="project-rows"></div>
+          <div class="proj-footer">
+            <button class="text-link" style="margin-top:0;" onclick="addProjectRow()">＋ 行を追加</button>
+            <span id="project-total-label" style="font-size:0.8rem; color:var(--muted);">合計 0 時間</span>
+          </div>
+          <div id="project-diff" class="proj-note">出勤すると実働時間との差が表示されます。</div>
+          <button id="btn-save-projects" class="btn-punch btn-punch-primary" style="width: 100%;" onclick="saveProjects()">保存</button>
+        </div>
+
+        <!-- 本日の実働 -->
+        <div class="card">
+          <div class="section-label">本日の実働</div>
+          <div id="today-work" class="big-stat">0:00</div>
+          <div class="kv-list">
+            <div class="kv-row"><span class="kv-key">出勤</span><span id="today-in" class="kv-val">-</span></div>
+            <div class="kv-row"><span class="kv-key">退勤</span><span id="today-out" class="kv-val">-</span></div>
+            <div class="kv-row"><span class="kv-key">休憩</span><span id="today-break" class="kv-val">0:00</span></div>
+            <div class="kv-row"><span class="kv-key">残業</span><span id="today-overtime" class="kv-val">0:00</span></div>
+          </div>
+        </div>
+
+        <!-- 今月 -->
+        <div class="card">
+          <div class="section-label">今月</div>
+          <div class="kv-list">
+            <div class="kv-row"><span class="kv-key">出勤日数</span><span id="month-days" class="kv-val">0</span></div>
+            <div class="kv-row"><span class="kv-key">総実働</span><span id="month-work" class="kv-val">0:00</span></div>
+            <div class="kv-row"><span class="kv-key">残業合計</span><span id="month-overtime" class="kv-val">0:00</span></div>
+            <div class="kv-row"><span class="kv-key">有給残</span><span id="leave-paid-rem" class="kv-val">10日</span></div>
+            <div class="kv-row"><span class="kv-key">夏休み残</span><span id="leave-summer-rem" class="kv-val">3日</span></div>
+          </div>
+          <div style="display:flex; gap:14px; flex-wrap:wrap;">
+            <button class="text-link" onclick="openTodayEditModal()">本日のメモ・修正 →</button>
+            <button class="text-link" onclick="openLeaveModal()">休暇を登録 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- タブ2: 履歴 -->
+    <div id="tab-history" class="hidden">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+          <h2 style="margin:0;">月間履歴</h2>
+          <input type="month" id="history-month" class="form-control" style="width:auto;" onchange="loadMonthHistory()">
+        </div>
+        <div style="display:flex; gap:24px; margin-bottom:16px; padding:12px 16px; background:#faf9f6; border:1px solid var(--border); border-radius:var(--radius); flex-wrap:wrap;">
+          <div><span class="section-label" style="margin-right:8px;">出勤日数</span><strong id="hist-days">0日</strong></div>
+          <div><span class="section-label" style="margin-right:8px;">総実働</span><strong id="hist-work">0:00</strong></div>
+          <div><span class="section-label" style="margin-right:8px;">残業</span><strong id="hist-overtime">0:00</strong></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>出勤</th>
+                <th>退勤</th>
+                <th>実働</th>
+                <th>残業</th>
+                <th>プロジェクト工数</th>
+                <th>メモ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+          <h2 style="margin:0;">休暇取得履歴（有給・夏休み）</h2>
+          <button class="btn btn-primary btn-sm" onclick="openLeaveModal()">＋ 休暇を登録</button>
+        </div>
+        <div style="display:flex; gap:24px; margin-bottom:14px; padding:10px 14px; background:#faf9f6; border:1px solid var(--border); border-radius:var(--radius); flex-wrap:wrap; font-size:0.86rem;">
+          <div>有給休暇：残 <strong id="hist-paid-rem">10</strong>日（取得 <span id="hist-paid-used">0</span> / 付与 <span id="hist-paid-grant">10</span>）</div>
+          <div>夏休み：残 <strong id="hist-summer-rem">3</strong>日（取得 <span id="hist-summer-used">0</span> / 付与 <span id="hist-summer-grant">3</span>）</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>種別</th>
+                <th>日数</th>
+                <th>メモ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="leave-history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- タブ3: 管理 -->
+    <div id="tab-admin" class="hidden">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+          <h2 style="margin:0;">月次集計（全スタッフ）</h2>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <input type="month" id="admin-month" class="form-control" style="width:auto;" onchange="loadAdminData()">
+            <button class="btn btn-primary btn-sm" onclick="openPdfModal()">PDF出力</button>
+            <a id="ss-link" href="#" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none;">スプレッドシートを開く</a>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>氏名</th>
+                <th>出勤日数</th>
+                <th>総実働</th>
+                <th>残業</th>
+                <th>有給(残/取)</th>
+                <th>夏休(残/取)</th>
+                <th>退勤漏れ</th>
+                <th>修正/手入力</th>
+                <th>プロジェクト別</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="admin-summary-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-bottom:12px;">プロジェクト別集計（対象月）</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>プロジェクト名</th>
+                <th>合計時間</th>
+                <th>担当スタッフ内訳</th>
+              </tr>
+            </thead>
+            <tbody id="admin-project-summary-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2 style="margin:0;">スタッフ管理</h2>
+          <button class="btn btn-primary btn-sm" onclick="openStaffModal()">＋ スタッフ追加</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>氏名</th>
+                <th>PIN</th>
+                <th>役割</th>
+                <th>状態</th>
+                <th>有給付与</th>
+                <th>夏休付与</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="admin-staff-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>プロジェクト管理</h2>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <input type="text" id="new-project-name" class="form-control" placeholder="新しいプロジェクト名">
+          <button class="btn btn-primary btn-sm" onclick="addNewProject()">追加</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <tbody id="admin-project-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="padding:14px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <span style="font-size:0.88rem; font-weight:600;">基本設定：1日の所定労働時間</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="number" step="0.5" min="1" max="24" id="admin-std-hours" class="form-control" style="width:80px; padding:6px 8px;">
+          <span style="font-size:0.85rem;">時間</span>
+          <button class="btn btn-outline btn-sm" onclick="saveAdminSettings()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル：勤怠修正 -->
+  <div id="edit-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2 id="edit-modal-title">勤怠修正</h2>
+      <input type="hidden" id="edit-staff-id">
+      <input type="hidden" id="edit-date">
+      <div class="row">
+        <div class="col form-group">
+          <label>出勤</label>
+          <input type="time" id="edit-in" class="form-control">
+        </div>
+        <div class="col form-group">
+          <label>退勤</label>
+          <input type="time" id="edit-out" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col form-group">
+          <label>休憩1 開始</label>
+          <input type="time" id="edit-b1s" class="form-control">
+        </div>
+        <div class="col form-group">
+          <label>休憩1 終了</label>
+          <input type="time" id="edit-b1e" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>メモ（遅刻・直行直帰など）</label>
+        <input type="text" id="edit-memo" class="form-control" placeholder="例: 客先直行のため">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn btn-outline" onclick="closeModal('edit-modal')">キャンセル</button>
+        <button class="btn btn-primary" onclick="submitModalEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル：スタッフ日別詳細（管理者用） -->
+  <div id="admin-detail-modal" class="modal-backdrop hidden">
+    <div class="modal" style="max-width: 680px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2 id="admin-detail-title" style="margin:0;">日別記録</h2>
+        <button class="btn btn-outline btn-sm" onclick="closeModal('admin-detail-modal')">閉じる</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>出勤</th>
+              <th>退勤</th>
+              <th>実働</th>
+              <th>プロジェクト工数</th>
+              <th>メモ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="admin-detail-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル：スタッフ追加・編集 -->
+  <div id="staff-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2 id="staff-modal-title">スタッフ登録</h2>
+      <input type="hidden" id="staff-edit-id">
+      <div class="form-group">
+        <label>氏名</label>
+        <input type="text" id="staff-edit-name" class="form-control" placeholder="例: 山田 太郎">
+      </div>
+      <div class="form-group">
+        <label>PIN（4桁の数字）</label>
+        <input type="text" id="staff-edit-pin" maxlength="4" inputmode="numeric" class="form-control" placeholder="例: 1234">
+      </div>
+      <div class="row">
+        <div class="col form-group">
+          <label>役割</label>
+          <select id="staff-edit-role" class="form-control">
+            <option value="スタッフ">スタッフ</option>
+            <option value="管理者">管理者</option>
+          </select>
+        </div>
+        <div class="col form-group">
+          <label>状態</label>
+          <select id="staff-edit-status" class="form-control">
+            <option value="有効">有効</option>
+            <option value="停止">停止</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col form-group">
+          <label>有給付与（日）</label>
+          <input type="number" step="0.5" min="0" id="staff-edit-paid" class="form-control" value="10">
+        </div>
+        <div class="col form-group">
+          <label>夏休み付与（日）</label>
+          <input type="number" step="0.5" min="0" id="staff-edit-summer" class="form-control" value="3">
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn btn-outline" onclick="closeModal('staff-modal')">キャンセル</button>
+        <button class="btn btn-primary" onclick="submitStaffModal()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル：休暇登録 -->
+  <div id="leave-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2>休暇を登録（有給・夏休み）</h2>
+      <div id="leave-modal-balance" style="font-size:0.85rem; padding:8px 12px; background:#faf9f6; border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px;">
+        有給休暇：残 <strong>--</strong>日 ／ 夏休み：残 <strong>--</strong>日
+      </div>
+      <div class="form-group">
+        <label>日付</label>
+        <input type="date" id="leave-date" class="form-control">
+      </div>
+      <div class="row">
+        <div class="col form-group">
+          <label>種別</label>
+          <select id="leave-type" class="form-control">
+            <option value="有給休暇">有給休暇</option>
+            <option value="夏休み">夏休み</option>
+          </select>
+        </div>
+        <div class="col form-group">
+          <label>日数</label>
+          <select id="leave-days" class="form-control">
+            <option value="1">1日（全休）</option>
+            <option value="0.5">0.5日（半休）</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>メモ（任意）</label>
+        <input type="text" id="leave-memo" class="form-control" placeholder="例: 私用のため">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn btn-outline" onclick="closeModal('leave-modal')">キャンセル</button>
+        <button class="btn btn-primary" onclick="submitLeaveModal()">登録</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル：PDF出力設定 -->
+  <div id="pdf-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2>PDF出力設定</h2>
+      <p style="font-size:0.84rem; color:var(--muted); margin-top:0; margin-bottom:14px;">
+        対象年月：<strong id="pdf-target-month"></strong>
+      </p>
+
+      <div class="form-group">
+        <label>出力する内容を選択</label>
+        <div style="display:flex; flex-direction:column; gap:8px; padding:10px; border:1px solid var(--border); border-radius:var(--radius); background:#faf9f6;">
+          <label style="display:flex; align-items:center; gap:8px; font-weight:500; color:var(--text); margin:0; cursor:pointer;">
+            <input type="checkbox" id="pdf-opt-summary" checked>
+            月次集計（全スタッフ一覧）
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:500; color:var(--text); margin:0; cursor:pointer;">
+            <input type="checkbox" id="pdf-opt-daily" checked onchange="togglePdfDailyOptions()">
+            スタッフ別 日別記録
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:500; color:var(--text); margin:0; cursor:pointer;">
+            <input type="checkbox" id="pdf-opt-projects">
+            プロジェクト別集計（月間）
+          </label>
+        </div>
+      </div>
+
+      <div id="pdf-daily-options" class="form-group" style="padding:12px; border:1px dashed var(--border); border-radius:var(--radius);">
+        <label>日別記録の対象スタッフ</label>
+        <select id="pdf-staff-select" class="form-control" style="margin-bottom:10px;">
+          <option value="ALL">全員分（スタッフごとに改ページ）</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:8px; font-weight:500; color:var(--text); margin:0; cursor:pointer;">
+          <input type="checkbox" id="pdf-opt-memo" checked>
+          メモ・手入力欄を含める
+        </label>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
+        <button class="btn btn-outline" onclick="closeModal('pdf-modal')">キャンセル</button>
+        <button class="btn btn-primary" onclick="generatePdfPrint()">PDFを作成（印刷）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 印刷用エリア -->
+  <div id="print-area"></div>
+
+  <script>
+    // ▼ Netlify等で公開する場合は、ここにGASのウェブアプリURL（.../exec）を貼り付けてください
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzTMPJS9bZ78_3gth0ByLdstD0-Q53HuxZwKymFI_lHaG2BJQQokT4Yq3xI03hr8anc/exec';
+
+    const STORAGE_KEY = 'kintai_gas_auth_v1';
+    let state = {
+      auth: null,
+      user: null,
+      today: '',
+      currentMonth: '',
+      todayRecord: null,
+      projects: [],
+      todayProjects: [],
+      monthHistory: null,
+      adminData: null,
+    };
+
+    async function callGas(fnName, ...args) {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        showLoading(true);
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(res => {
+              showLoading(false);
+              resolve(res);
+            })
+            .withFailureHandler(err => {
+              showLoading(false);
+              const msg = err && err.message ? err.message : String(err);
+              toast(msg);
+              reject(err);
+            })[fnName](...args);
+        });
+      }
+
+      if (!API_URL || API_URL.includes('ここに')) {
+        toast('index.html の API_URL に GAS のウェブアプリURLを設定してください');
+        throw new Error('API_URL 未設定');
+      }
+
+      showLoading(true);
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: fnName, args }),
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          throw new Error(json.error || 'サーバーエラーが発生しました');
+        }
+        return json.data;
+      } catch (err) {
+        const msg = err && err.message ? err.message : String(err);
+        toast(msg);
+        throw err;
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function showLoading(show) {
+      document.getElementById('loading-overlay').classList.toggle('hidden', !show);
+    }
+
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 3200);
+    }
+
+    function minToHM(min) {
+      const m = Math.max(0, Number(min) || 0);
+      const h = Math.floor(m / 60);
+      const r = m % 60;
+      return `${h}:${('0' + r).slice(-2)}`;
+    }
+
+    function timeToMin(hhmm) {
+      if (!hhmm) return null;
+      const p = String(hhmm).split(':');
+      if (p.length !== 2) return null;
+      return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+    }
+
+    function calcBreakMinutes(rec) {
+      if (!rec) return 0;
+      let total = 0;
+      let hasManual = false;
+      const pairs = [
+        [rec.break1Start, rec.break1End],
+        [rec.break2Start, rec.break2End],
+      ];
+      pairs.forEach(([s, e]) => {
+        const sm = timeToMin(s);
+        const em = timeToMin(e);
+        if (sm !== null && em !== null) {
+          hasManual = true;
+          let d = em - sm;
+          if (d < 0) d += 24 * 60;
+          total += d;
+        }
+      });
+      if (!hasManual && rec.clockIn) {
+        if (!rec.clockOut) return 60; // 出勤中はあらかじめ1時間見込み
+        const inM = timeToMin(rec.clockIn);
+        const outM = timeToMin(rec.clockOut);
+        if (inM !== null && outM !== null) {
+          let span = outM - inM;
+          if (span < 0) span += 24 * 60;
+          if (span > 360) return 60;
+        }
+      }
+      return total;
+    }
+
+    function getNthMonday(year, month, nth) {
+      const firstDay = new Date(year, month - 1, 1).getDay();
+      const offset = (1 - firstDay + 7) % 7;
+      return 1 + offset + (nth - 1) * 7;
+    }
+
+    function getBaseHolidayName(year, month, day) {
+      const key = `${month}-${day}`;
+      const fixed = {
+        '1-1': '元日',
+        '2-11': '建国記念の日',
+        '2-23': '天皇誕生日',
+        '4-29': '昭和の日',
+        '5-3': '憲法記念日',
+        '5-4': 'みどりの日',
+        '5-5': 'こどもの日',
+        '8-11': '山の日',
+        '11-3': '文化の日',
+        '11-23': '勤労感謝の日',
+      };
+      if (fixed[key]) return fixed[key];
+      if (month === 1 && day === getNthMonday(year, 1, 2)) return '成人の日';
+      if (month === 7 && day === getNthMonday(year, 7, 3)) return '海の日';
+      if (month === 9 && day === getNthMonday(year, 9, 3)) return '敬老の日';
+      if (month === 10 && day === getNthMonday(year, 10, 2)) return 'スポーツの日';
+      if (month === 3) {
+        const vernal = Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+        if (day === vernal) return '春分の日';
+      }
+      if (month === 9) {
+        const autumn = Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+        if (day === autumn) return '秋分の日';
+      }
+      return '';
+    }
+
+    function getJapaneseHolidayName(year, month, day) {
+      const direct = getBaseHolidayName(year, month, day);
+      if (direct) return direct;
+
+      // 振替休日判定（前日以前が連続した祝日で、その中に日曜の祝日があるか）
+      const d = new Date(year, month - 1, day);
+      if (d.getDay() !== 0) {
+        let prev = new Date(year, month - 1, day - 1);
+        while (true) {
+          const pname = getBaseHolidayName(prev.getFullYear(), prev.getMonth() + 1, prev.getDate());
+          if (!pname) break;
+          if (prev.getDay() === 0) return '振替休日';
+          prev.setDate(prev.getDate() - 1);
+        }
+      }
+
+      // 国民の休日判定（前日と翌日がともに祝日）
+      const prevD = new Date(year, month - 1, day - 1);
+      const nextD = new Date(year, month - 1, day + 1);
+      if (
+        getBaseHolidayName(prevD.getFullYear(), prevD.getMonth() + 1, prevD.getDate()) &&
+        getBaseHolidayName(nextD.getFullYear(), nextD.getMonth() + 1, nextD.getDate())
+      ) {
+        return '国民の休日';
+      }
+      return '';
+    }
+
+    function formatDateInfo(dateStr) {
+      if (!dateStr) return { label: '-', isRed: false };
+      const parts = String(dateStr).split('-');
+      if (parts.length !== 3) return { label: dateStr, isRed: false };
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      const dt = new Date(y, m - 1, d);
+      const days = ['日', '月', '火', '水', '木', '金', '土'];
+      const dow = dt.getDay();
+      const w = days[dow];
+      const holiday = getJapaneseHolidayName(y, m, d);
+      const isRed = (dow === 0 || dow === 6 || Boolean(holiday));
+      const label = holiday ? `${dateStr} (${w}・${holiday})` : `${dateStr} (${w})`;
+      return { label, isRed };
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const days = ['日', '月', '火', '水', '木', '金', '土'];
+      const y = now.getFullYear();
+      const m = now.getMonth() + 1;
+      const d = now.getDate();
+      const dow = now.getDay();
+      const w = days[dow];
+      const holiday = getJapaneseHolidayName(y, m, d);
+      const hh = ('0' + now.getHours()).slice(-2);
+      const mm = ('0' + now.getMinutes()).slice(-2);
+      const ss = ('0' + now.getSeconds()).slice(-2);
+      document.getElementById('clock-hm').textContent = `${hh}:${mm}`;
+      document.getElementById('clock-sec').textContent = `:${ss}`;
+      const dateEl = document.getElementById('clock-date');
+      dateEl.textContent = holiday ? `${y}年${m}月${d}日（${w}・${holiday}）` : `${y}年${m}月${d}日（${w}）`;
+      dateEl.classList.toggle('holiday-text', dow === 0 || dow === 6 || Boolean(holiday));
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.id && parsed.pin) {
+            await performLogin(parsed.id, parsed.pin, true);
+            return;
+          }
+        } catch (e) {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+      await loadLoginStaffList();
+    });
+
+    async function loadLoginStaffList() {
+      const list = await callGas('getPublicStaffList');
+      const sel = document.getElementById('login-staff');
+      sel.innerHTML = '';
+      list.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    async function handleLogin() {
+      const id = document.getElementById('login-staff').value;
+      const pin = document.getElementById('login-pin').value.trim();
+      if (!id || !pin) {
+        toast('スタッフとPINを入力してください');
+        return;
+      }
+      await performLogin(id, pin, false);
+    }
+
+    async function performLogin(id, pin, isAuto) {
+      try {
+        const data = await callGas('loginAndGetInitialData', id, pin);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ id, pin }));
+        state.auth = { id, pin };
+        state.user = data.user;
+        state.today = data.today;
+        state.currentMonth = data.currentMonth;
+        state.todayRecord = data.todayRecord;
+        state.projects = data.projects;
+        state.todayProjects = data.todayProjects;
+        state.monthHistory = data.monthHistory;
+        state.leaveSummary = data.leaveSummary;
+        state.standardHours = data.standardHours || 8;
+
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('app-view').classList.remove('hidden');
+
+        document.getElementById('header-user-name').textContent = `${data.user.name} さん`;
+        document.getElementById('tab-btn-punch').classList.toggle('hidden', data.user.isAdmin);
+        document.getElementById('tab-btn-history').classList.toggle('hidden', data.user.isAdmin);
+        document.getElementById('tab-btn-admin').classList.toggle('hidden', !data.user.isAdmin);
+
+        document.getElementById('history-month').value = data.currentMonth;
+        document.getElementById('admin-month').value = data.currentMonth;
+
+        if (data.user.isAdmin) {
+          switchTab('admin', document.getElementById('tab-btn-admin'));
+        } else {
+          switchTab('punch', document.getElementById('tab-btn-punch'));
+          renderToday();
+          renderProjectRows();
+          renderHistory();
+        }
+      } catch (e) {
+        if (isAuto) {
+          localStorage.removeItem(STORAGE_KEY);
+          await loadLoginStaffList();
+        }
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+
+    function switchTab(tabName, btn) {
+      ['punch', 'history', 'admin'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('hidden', t !== tabName);
+      });
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      if (tabName === 'history') loadMonthHistory();
+      if (tabName === 'admin') loadAdminData();
+    }
+
+    // ==========================================
+    // 打刻タブ
+    // ==========================================
+    function renderToday() {
+      const rec = state.todayRecord;
+      const dot = document.getElementById('status-dot');
+      const statusTextEl = document.getElementById('status-text');
+      const btnIn = document.getElementById('btn-in');
+      const btnOut = document.getElementById('btn-out');
+
+      let statusText = '未出勤';
+      let dotClass = 'dot-gray';
+
+      if (rec && rec.clockIn) {
+        if (rec.clockOut) {
+          statusText = '退勤済';
+          dotClass = 'dot-blue';
+        } else {
+          statusText = '勤務中';
+          dotClass = 'dot-green';
+        }
+
+        btnIn.disabled = true;
+        btnOut.disabled = Boolean(rec.clockOut);
+      } else {
+        btnIn.disabled = false;
+        btnOut.disabled = true;
+      }
+
+      dot.className = 'status-dot ' + dotClass;
+      statusTextEl.textContent = statusText;
+
+      // 本日の打刻ログ表示
+      const logEl = document.getElementById('today-log-detail');
+      if (!rec || !rec.clockIn) {
+        logEl.textContent = 'まだ打刻はありません。';
+      } else {
+        const parts = [`出勤 ${rec.clockIn}`];
+        if (rec.break1Start) {
+          parts.push(`休憩1 ${rec.break1Start}〜${rec.break1End || ''}`);
+        } else if (!rec.break2Start) {
+          const bMin = calcBreakMinutes(rec);
+          if (bMin > 0) parts.push(`休憩 ${bMin === 60 ? '1時間' : minToHM(bMin)}`);
+        }
+        if (rec.break2Start) parts.push(`休憩2 ${rec.break2Start}〜${rec.break2End || ''}`);
+        if (rec.clockOut) parts.push(`退勤 ${rec.clockOut}`);
+        if (rec.manualFlag) parts.push(`[${rec.manualFlag}]`);
+        if (rec.memo) parts.push(`メモ: ${rec.memo}`);
+        logEl.textContent = parts.join('　/　');
+      }
+
+      // 本日の実働カード
+      document.getElementById('today-work').textContent = rec ? minToHM(rec.workMinutes) : '0:00';
+      document.getElementById('today-in').textContent = (rec && rec.clockIn) || '-';
+      document.getElementById('today-out').textContent = (rec && rec.clockOut) || '-';
+      document.getElementById('today-break').textContent = minToHM(calcBreakMinutes(rec));
+      document.getElementById('today-overtime').textContent = rec ? minToHM(rec.overtimeMinutes) : '0:00';
+
+      // 今月カード
+      if (state.monthHistory && state.monthHistory.summary) {
+        document.getElementById('month-days').textContent = state.monthHistory.summary.days;
+        document.getElementById('month-work').textContent = minToHM(state.monthHistory.summary.workMin);
+        document.getElementById('month-overtime').textContent = minToHM(state.monthHistory.summary.overtimeMin);
+      }
+      if (state.leaveSummary) {
+        document.getElementById('leave-paid-rem').textContent = `${state.leaveSummary.paidRemaining}日`;
+        document.getElementById('leave-summer-rem').textContent = `${state.leaveSummary.summerRemaining}日`;
+      }
+
+      updateProjectDiff();
+    }
+
+    function toggleManualTime() {
+      const checked = document.getElementById('manual-check').checked;
+      document.getElementById('manual-time').disabled = !checked;
+    }
+
+    async function doPunch(action) {
+      const isManual = document.getElementById('manual-check').checked;
+      const manualVal = document.getElementById('manual-time').value;
+      if (isManual && !manualVal) {
+        toast('手入力の時刻を指定してください');
+        return;
+      }
+      const rec = await callGas('punchClock', state.auth.id, state.auth.pin, action, isManual ? manualVal : '');
+      state.todayRecord = rec;
+      document.getElementById('manual-check').checked = false;
+      document.getElementById('manual-time').disabled = true;
+      if (state.monthHistory && state.monthHistory.records) {
+        const idx = state.monthHistory.records.findIndex(r => r.date === rec.date);
+        if (idx >= 0) {
+          state.monthHistory.records[idx] = rec;
+        } else {
+          state.monthHistory.records.push(rec);
+        }
+        let days = 0, workMin = 0, overtimeMin = 0;
+        state.monthHistory.records.forEach(r => {
+          if (r.clockIn) days++;
+          workMin += Number(r.workMinutes) || 0;
+          overtimeMin += Number(r.overtimeMinutes) || 0;
+        });
+        state.monthHistory.summary = { days, workMin, overtimeMin };
+      }
+      renderToday();
+      if (!state.todayProjects || state.todayProjects.length === 0) {
+        renderProjectRows();
+      }
+      toast('打刻しました');
+    }
+
+    function openTodayEditModal() {
+      const rec = state.todayRecord || {
+        staffId: state.user.id,
+        staffName: state.user.name,
+        date: state.today,
+        clockIn: '',
+        clockOut: '',
+        break1Start: '',
+        break1End: '',
+        memo: '',
+      };
+      openEditModal(rec);
+    }
+
+    // プロジェクト別工数
+    function getDefaultMainProject() {
+      const activeNames = state.projects.map(p => p.name);
+      if (activeNames.length === 0) return '';
+      const counts = {};
+      if (state.monthHistory && state.monthHistory.records) {
+        state.monthHistory.records.forEach(r => {
+          if (!r.projectText) return;
+          r.projectText.split(' / ').forEach(part => {
+            const pName = part.split(':')[0].trim();
+            if (activeNames.includes(pName)) {
+              counts[pName] = (counts[pName] || 0) + 1;
+            }
+          });
+        });
+      }
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      return sorted.length > 0 ? sorted[0][0] : activeNames[0];
+    }
+
+    function getDefaultProjectHours() {
+      const rec = state.todayRecord;
+      if (rec && rec.workMinutes > 0) {
+        return Math.max(0.5, Math.round((rec.workMinutes / 60) * 2) / 2);
+      }
+      return state.standardHours || 8;
+    }
+
+    function renderProjectRows() {
+      const container = document.getElementById('project-rows');
+      container.innerHTML = '';
+      const list = state.todayProjects.length > 0
+        ? state.todayProjects
+        : [{ projectName: getDefaultMainProject(), hours: getDefaultProjectHours() }];
+      list.forEach(item => appendProjectRowEl(item.projectName, item.hours));
+      updateProjectDiff();
+    }
+
+    function addProjectRow() {
+      appendProjectRowEl('', '');
+    }
+
+    function appendProjectRowEl(selectedName, hoursVal) {
+      const container = document.getElementById('project-rows');
+      const div = document.createElement('div');
+      div.className = 'proj-row project-row';
+
+      const sel = document.createElement('select');
+      sel.className = 'form-control proj-select';
+      sel.style.flex = '1';
+      const emptyOpt = document.createElement('option');
+      emptyOpt.value = '';
+      emptyOpt.textContent = 'プロジェクトを選択';
+      sel.appendChild(emptyOpt);
+      state.projects.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        if (p.name === selectedName) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      const inp = document.createElement('select');
+      inp.className = 'form-control proj-hours';
+      inp.style.width = '78px';
+      const emptyHOpt = document.createElement('option');
+      emptyHOpt.value = '';
+      emptyHOpt.textContent = '--';
+      inp.appendChild(emptyHOpt);
+
+      const numVal = parseFloat(hoursVal);
+      let matched = false;
+      for (let h = 0.5; h <= 16; h += 0.5) {
+        const opt = document.createElement('option');
+        opt.value = String(h);
+        opt.textContent = String(h);
+        if (!isNaN(numVal) && Math.abs(numVal - h) < 0.001) {
+          opt.selected = true;
+          matched = true;
+        }
+        inp.appendChild(opt);
+      }
+      if (!isNaN(numVal) && numVal > 0 && !matched) {
+        const extraOpt = document.createElement('option');
+        extraOpt.value = String(numVal);
+        extraOpt.textContent = String(numVal);
+        extraOpt.selected = true;
+        inp.appendChild(extraOpt);
+      }
+      inp.onchange = updateProjectDiff;
+
+      const unit = document.createElement('span');
+      unit.textContent = '時間';
+      unit.style.fontSize = '0.85rem';
+      unit.style.color = 'var(--text)';
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-outline btn-sm';
+      delBtn.textContent = '×';
+      delBtn.style.padding = '7px 11px';
+      delBtn.onclick = () => { div.remove(); updateProjectDiff(); };
+
+      div.appendChild(sel);
+      div.appendChild(inp);
+      div.appendChild(unit);
+      div.appendChild(delBtn);
+      container.appendChild(div);
+    }
+
+    function updateProjectDiff() {
+      let totalProj = 0;
+      document.querySelectorAll('.proj-hours').forEach(inp => {
+        const v = parseFloat(inp.value);
+        if (!isNaN(v)) totalProj += v;
+      });
+      document.getElementById('project-total-label').textContent = `合計 ${Number(totalProj.toFixed(2))} 時間`;
+
+      const rec = state.todayRecord;
+      const diffEl = document.getElementById('project-diff');
+      const saveBtn = document.getElementById('btn-save-projects');
+      if (!rec || !rec.clockIn) {
+        diffEl.textContent = '出勤すると実働時間との差が表示されます。';
+        saveBtn.disabled = true;
+      } else {
+        const workH = rec.workMinutes / 60;
+        const diff = (totalProj - workH).toFixed(2);
+        diffEl.textContent = `実働 ${workH.toFixed(2)} 時間との差: ${diff} 時間`;
+        saveBtn.disabled = false;
+      }
+    }
+
+    async function saveProjects() {
+      const items = [];
+      document.querySelectorAll('.project-row').forEach(row => {
+        const name = row.querySelector('.proj-select').value;
+        const hours = row.querySelector('.proj-hours').value;
+        if (name && hours) items.push({ projectName: name, hours });
+      });
+      state.todayProjects = await callGas('saveDayProjects', state.auth.id, state.auth.pin, state.today, items);
+      renderProjectRows();
+      toast('勤務実績を保存しました');
+    }
+
+    // ==========================================
+    // 履歴タブ
+    // ==========================================
+    async function loadMonthHistory() {
+      const ym = document.getElementById('history-month').value;
+      if (!ym) return;
+      state.monthHistory = await callGas('getMonthHistoryForUser', state.auth.id, state.auth.pin, ym);
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const data = state.monthHistory;
+      if (!data) return;
+      document.getElementById('hist-days').textContent = `${data.summary.days}日`;
+      document.getElementById('hist-work').textContent = minToHM(data.summary.workMin);
+      document.getElementById('hist-overtime').textContent = minToHM(data.summary.overtimeMin);
+
+      const tbody = document.getElementById('history-tbody');
+      tbody.innerHTML = '';
+      const indexed = data.records.map((r, idx) => ({ r, idx }));
+      indexed.sort((a, b) => (a.r.date > b.r.date ? 1 : -1));
+      indexed.forEach(({ r, idx }) => {
+        const dInfo = formatDateInfo(r.date);
+        const tr = document.createElement('tr');
+        if (dInfo.isRed) tr.className = 'row-holiday';
+        tr.innerHTML = `
+          <td class="date-cell">${escapeHtml(dInfo.label)}</td>
+          <td>${r.clockIn || '-'}</td>
+          <td>${r.clockOut || '-'}</td>
+          <td>${minToHM(r.workMinutes)}</td>
+          <td>${minToHM(r.overtimeMinutes)}</td>
+          <td style="white-space:normal; min-width:160px; font-size:0.8rem;">${escapeHtml(r.projectText || '-')}</td>
+          <td>${escapeHtml(r.memo)}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="openEditModal(state.monthHistory.records[${idx}])">修正</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      renderLeaveHistory();
+    }
+
+    function renderLeaveHistory() {
+      const ls = state.leaveSummary;
+      if (!ls) return;
+      document.getElementById('hist-paid-rem').textContent = ls.paidRemaining;
+      document.getElementById('hist-paid-used').textContent = ls.paidUsed;
+      document.getElementById('hist-paid-grant').textContent = ls.paidGrant;
+      document.getElementById('hist-summer-rem').textContent = ls.summerRemaining;
+      document.getElementById('hist-summer-used').textContent = ls.summerUsed;
+      document.getElementById('hist-summer-grant').textContent = ls.summerGrant;
+
+      const tbody = document.getElementById('leave-history-tbody');
+      tbody.innerHTML = '';
+      if (!ls.records || ls.records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);">休暇の取得記録はありません。</td></tr>';
+        return;
+      }
+      ls.records.forEach(r => {
+        const dInfo = formatDateInfo(r.date);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(dInfo.label)}</td>
+          <td>${escapeHtml(r.type)}</td>
+          <td>${r.days}日</td>
+          <td>${escapeHtml(r.memo)}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="removeLeave('${r.date}', '${r.type}')">取消</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openLeaveModal() {
+      const ls = state.leaveSummary || { paidRemaining: 10, summerRemaining: 3 };
+      document.getElementById('leave-modal-balance').innerHTML =
+        `有給休暇：残 <strong>${ls.paidRemaining}</strong>日 ／ 夏休み：残 <strong>${ls.summerRemaining}</strong>日`;
+      const typeSel = document.getElementById('leave-type');
+      typeSel.options[0].textContent = `有給休暇（残 ${ls.paidRemaining}日）`;
+      typeSel.options[1].textContent = `夏休み（残 ${ls.summerRemaining}日）`;
+      typeSel.value = '有給休暇';
+
+      document.getElementById('leave-date').value = state.today || '';
+      document.getElementById('leave-days').value = '1';
+      document.getElementById('leave-memo').value = '';
+      document.getElementById('leave-modal').classList.remove('hidden');
+    }
+
+    async function submitLeaveModal() {
+      const payload = {
+        date: document.getElementById('leave-date').value,
+        type: document.getElementById('leave-type').value,
+        days: document.getElementById('leave-days').value,
+        memo: document.getElementById('leave-memo').value,
+      };
+      if (!payload.date) {
+        toast('日付を指定してください');
+        return;
+      }
+      state.leaveSummary = await callGas('saveLeaveRecord', state.auth.id, state.auth.pin, payload);
+      closeModal('leave-modal');
+      renderToday();
+      renderLeaveHistory();
+      toast('休暇を登録しました');
+    }
+
+    async function removeLeave(dateStr, type) {
+      state.leaveSummary = await callGas('deleteLeaveRecord', state.auth.id, state.auth.pin, dateStr, type);
+      renderToday();
+      renderLeaveHistory();
+      toast('休暇を取り消しました');
+    }
+
+    function openEditModal(rec) {
+      document.getElementById('edit-modal-title').textContent = `${rec.date} (${rec.staffName}) の修正`;
+      document.getElementById('edit-staff-id').value = rec.staffId;
+      document.getElementById('edit-date').value = rec.date;
+      document.getElementById('edit-in').value = rec.clockIn || '';
+      document.getElementById('edit-out').value = rec.clockOut || '';
+      document.getElementById('edit-b1s').value = rec.break1Start || '';
+      document.getElementById('edit-b1e').value = rec.break1End || '';
+      document.getElementById('edit-memo').value = rec.memo || '';
+      document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    async function submitModalEdit() {
+      const payload = {
+        staffId: document.getElementById('edit-staff-id').value,
+        date: document.getElementById('edit-date').value,
+        clockIn: document.getElementById('edit-in').value,
+        clockOut: document.getElementById('edit-out').value,
+        break1Start: document.getElementById('edit-b1s').value,
+        break1End: document.getElementById('edit-b1e').value,
+        memo: document.getElementById('edit-memo').value,
+      };
+      const updated = await callGas('saveAttendanceEdit', state.auth.id, state.auth.pin, payload);
+      closeModal('edit-modal');
+      toast('修正を保存しました');
+
+      if (payload.staffId === state.user.id && payload.date === state.today) {
+        state.todayRecord = updated;
+        state.monthHistory = await callGas('getMonthHistoryForUser', state.auth.id, state.auth.pin, state.currentMonth);
+        renderToday();
+      }
+      if (!document.getElementById('tab-history').classList.contains('hidden')) {
+        await loadMonthHistory();
+      }
+      if (!document.getElementById('tab-admin').classList.contains('hidden')) {
+        await loadAdminData();
+        if (!document.getElementById('admin-detail-modal').classList.contains('hidden')) {
+          openAdminDetail(payload.staffId);
+        }
+      }
+    }
+
+    // ==========================================
+    // 管理タブ
+    // ==========================================
+    async function loadAdminData() {
+      const ym = document.getElementById('admin-month').value;
+      const data = await callGas('getAdminDashboardData', state.auth.id, state.auth.pin, ym);
+      state.adminData = data;
+      document.getElementById('ss-link').href = data.spreadsheetUrl;
+      document.getElementById('admin-std-hours').value = data.standardHours;
+
+      const sumBody = document.getElementById('admin-summary-tbody');
+      sumBody.innerHTML = '';
+      data.monthlySummary.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(s.staffName)}</td>
+          <td>${s.days}日</td>
+          <td>${minToHM(s.workMin)}</td>
+          <td>${minToHM(s.overtimeMin)}</td>
+          <td>${s.paidRemaining}日 <span style="color:var(--muted);font-size:0.78rem;">(${s.paidUsed})</span></td>
+          <td>${s.summerRemaining}日 <span style="color:var(--muted);font-size:0.78rem;">(${s.summerUsed})</span></td>
+          <td>${s.missingOut > 0 ? `<span class="badge badge-red">${s.missingOut}</span>` : '0'}</td>
+          <td>${s.manualCount}</td>
+          <td style="white-space:normal; min-width:180px; font-size:0.8rem;">${escapeHtml(s.projectBreakdown || '-')}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="openAdminDetail('${s.staffId}')">日別</button></td>
+        `;
+        sumBody.appendChild(tr);
+      });
+
+      const projSumBody = document.getElementById('admin-project-summary-tbody');
+      projSumBody.innerHTML = '';
+      const pList = data.projectMonthlySummary || [];
+      if (pList.length === 0) {
+        projSumBody.innerHTML = '<tr><td colspan="3" style="color:var(--muted);">この月のプロジェクト工数データはありません。</td></tr>';
+      } else {
+        pList.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${escapeHtml(p.projectName)}</td>
+            <td><strong>${p.totalHours}h</strong></td>
+            <td style="white-space:normal; font-size:0.82rem;">${escapeHtml(p.staffBreakdown || '-')}</td>
+          `;
+          projSumBody.appendChild(tr);
+        });
+      }
+
+      const staffBody = document.getElementById('admin-staff-tbody');
+      staffBody.innerHTML = '';
+      data.staffList.forEach((st, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${st.id}</td>
+          <td>${escapeHtml(st.name)}</td>
+          <td>${escapeHtml(st.pin)}</td>
+          <td>${st.role}</td>
+          <td><span class="badge ${st.status === '有効' ? 'badge-green' : 'badge-gray'}">${st.status}</span></td>
+          <td>${st.paidGrant}日</td>
+          <td>${st.summerGrant}日</td>
+          <td><button class="btn btn-outline btn-sm" onclick="openStaffModal(state.adminData.staffList[${idx}])">編集</button></td>
+        `;
+        staffBody.appendChild(tr);
+      });
+
+      const projBody = document.getElementById('admin-project-tbody');
+      projBody.innerHTML = '';
+      data.projects.forEach(p => {
+        const nextStatus = p.status === '稼働中' ? '停止' : '稼働中';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(p.name)}</td>
+          <td><span class="badge ${p.status === '稼働中' ? 'badge-green' : 'badge-gray'}">${p.status}</span></td>
+          <td style="text-align:right;">
+            <button class="btn btn-outline btn-sm" onclick="toggleProjectStatus('${p.id}', '${nextStatus}')">${nextStatus}にする</button>
+          </td>
+        `;
+        projBody.appendChild(tr);
+      });
+    }
+
+    function openAdminDetail(staffId) {
+      const target = state.adminData.monthlySummary.find(s => s.staffId === staffId);
+      if (!target) return;
+      document.getElementById('admin-detail-title').textContent = `${target.staffName} の日別記録`;
+      const tbody = document.getElementById('admin-detail-tbody');
+      tbody.innerHTML = '';
+      const indexed = target.records.map((r, idx) => ({ r, idx }));
+      indexed.sort((a, b) => (a.r.date > b.r.date ? 1 : -1));
+      indexed.forEach(({ r, idx }) => {
+        const dInfo = formatDateInfo(r.date);
+        const tr = document.createElement('tr');
+        if (dInfo.isRed) tr.className = 'row-holiday';
+        tr.innerHTML = `
+          <td class="date-cell">${escapeHtml(dInfo.label)}</td>
+          <td>${r.clockIn || '-'}</td>
+          <td>${r.clockOut || '-'}</td>
+          <td>${minToHM(r.workMinutes)}</td>
+          <td style="white-space:normal; min-width:160px; font-size:0.8rem;">${escapeHtml(r.projectText || '-')}</td>
+          <td>${escapeHtml(r.memo)}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="openAdminRecordEdit('${staffId}', ${idx})">修正</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('admin-detail-modal').classList.remove('hidden');
+    }
+
+    function openAdminRecordEdit(staffId, idx) {
+      const target = state.adminData.monthlySummary.find(s => s.staffId === staffId);
+      if (target && target.records[idx]) {
+        openEditModal(target.records[idx]);
+      }
+    }
+
+    function openStaffModal(st) {
+      document.getElementById('staff-modal-title').textContent = st ? 'スタッフ編集' : 'スタッフ追加';
+      document.getElementById('staff-edit-id').value = st ? st.id : '';
+      document.getElementById('staff-edit-name').value = st ? st.name : '';
+      document.getElementById('staff-edit-pin').value = st ? st.pin : '';
+      document.getElementById('staff-edit-role').value = st ? st.role : 'スタッフ';
+      document.getElementById('staff-edit-status').value = st ? st.status : '有効';
+      document.getElementById('staff-edit-paid').value = st ? st.paidGrant : 10;
+      document.getElementById('staff-edit-summer').value = st ? st.summerGrant : 3;
+      document.getElementById('staff-modal').classList.remove('hidden');
+    }
+
+    async function submitStaffModal() {
+      const payload = {
+        id: document.getElementById('staff-edit-id').value,
+        name: document.getElementById('staff-edit-name').value,
+        pin: document.getElementById('staff-edit-pin').value,
+        role: document.getElementById('staff-edit-role').value,
+        status: document.getElementById('staff-edit-status').value,
+        paidGrant: document.getElementById('staff-edit-paid').value,
+        summerGrant: document.getElementById('staff-edit-summer').value,
+      };
+      await callGas('adminSaveStaff', state.auth.id, state.auth.pin, payload);
+      closeModal('staff-modal');
+      toast('スタッフ情報を保存しました');
+      await loadAdminData();
+    }
+
+    async function addNewProject() {
+      const inp = document.getElementById('new-project-name');
+      const name = inp.value.trim();
+      if (!name) return;
+      await callGas('adminSaveProject', state.auth.id, state.auth.pin, { name });
+      inp.value = '';
+      toast('プロジェクトを追加しました');
+      await loadAdminData();
+    }
+
+    async function toggleProjectStatus(id, status) {
+      await callGas('adminSaveProject', state.auth.id, state.auth.pin, { id, status });
+      toast('プロジェクト状態を更新しました');
+      await loadAdminData();
+    }
+
+    async function saveAdminSettings() {
+      const hours = document.getElementById('admin-std-hours').value;
+      await callGas('adminSaveSettings', state.auth.id, state.auth.pin, hours);
+      toast('設定を保存しました');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function openPdfModal() {
+      if (!state.adminData) {
+        toast('集計データを読み込み中です');
+        return;
+      }
+      const ym = document.getElementById('admin-month').value;
+      document.getElementById('pdf-target-month').textContent = ym;
+
+      const sel = document.getElementById('pdf-staff-select');
+      sel.innerHTML = '<option value="ALL">全員分（スタッフごとに改ページ）</option>';
+      state.adminData.monthlySummary.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.staffId;
+        opt.textContent = `${s.staffName} (${s.staffId})`;
+        sel.appendChild(opt);
+      });
+
+      togglePdfDailyOptions();
+      document.getElementById('pdf-modal').classList.remove('hidden');
+    }
+
+    function togglePdfDailyOptions() {
+      const checked = document.getElementById('pdf-opt-daily').checked;
+      document.getElementById('pdf-daily-options').classList.toggle('hidden', !checked);
+    }
+
+    function generatePdfPrint() {
+      const includeSummary = document.getElementById('pdf-opt-summary').checked;
+      const includeDaily = document.getElementById('pdf-opt-daily').checked;
+      const includeProjects = document.getElementById('pdf-opt-projects').checked;
+
+      if (!includeSummary && !includeDaily && !includeProjects) {
+        toast('出力する項目を1つ以上選択してください');
+        return;
+      }
+
+      const ym = document.getElementById('admin-month').value;
+      const targetStaffId = document.getElementById('pdf-staff-select').value;
+      const includeMemo = document.getElementById('pdf-opt-memo').checked;
+      const nowStr = new Date().toLocaleString('ja-JP');
+
+      let html = `
+        <div class="print-header">
+          <div class="print-title">WORK LOG レポート（${escapeHtml(ym)}）</div>
+          <div class="print-meta">出力日時: ${escapeHtml(nowStr)}</div>
+        </div>
+      `;
+
+      // 1. 月次集計
+      if (includeSummary) {
+        html += `<div class="print-section-title">月次集計（スタッフ別）</div>`;
+        html += `
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>氏名</th><th>出勤日数</th><th>総実働</th><th>残業</th><th>有給(残/取)</th><th>夏休(残/取)</th><th>退勤漏れ</th><th>修正/手入力</th><th>プロジェクト別</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        state.adminData.monthlySummary.forEach(s => {
+          html += `
+            <tr>
+              <td>${escapeHtml(s.staffId)}</td>
+              <td>${escapeHtml(s.staffName)}</td>
+              <td>${s.days}日</td>
+              <td>${minToHM(s.workMin)}</td>
+              <td>${minToHM(s.overtimeMin)}</td>
+              <td>${s.paidRemaining}日 (${s.paidUsed})</td>
+              <td>${s.summerRemaining}日 (${s.summerUsed})</td>
+              <td>${s.missingOut}</td>
+              <td>${s.manualCount}</td>
+              <td>${escapeHtml(s.projectBreakdown || '-')}</td>
+            </tr>
+          `;
+        });
+        html += `</tbody></table>`;
+      }
+
+      // 2. プロジェクト別集計
+      if (includeProjects) {
+        const pList = state.adminData.projectMonthlySummary || [];
+        html += `<div class="print-section-title">プロジェクト別集計（${escapeHtml(ym)}）</div>`;
+        if (pList.length === 0) {
+          html += `<p style="font-size:11px; color:#666;">この月のプロジェクト工数データはありません。</p>`;
+        } else {
+          html += `
+            <table class="print-table">
+              <thead>
+                <tr><th>プロジェクト名</th><th>合計時間(h)</th><th>担当スタッフ内訳</th></tr>
+              </thead>
+              <tbody>
+          `;
+          pList.forEach(p => {
+            html += `
+              <tr>
+                <td>${escapeHtml(p.projectName)}</td>
+                <td>${p.totalHours}h</td>
+                <td>${escapeHtml(p.staffBreakdown)}</td>
+              </tr>
+            `;
+          });
+          html += `</tbody></table>`;
+        }
+      }
+
+      // 3. スタッフ別 日別記録
+      if (includeDaily) {
+        const targets = targetStaffId === 'ALL'
+          ? state.adminData.monthlySummary
+          : state.adminData.monthlySummary.filter(s => s.staffId === targetStaffId);
+
+        targets.forEach((s, idx) => {
+          const needBreak = (includeSummary || includeProjects || idx > 0);
+          html += `<div class="${needBreak ? 'print-page-break' : ''}"></div>`;
+          html += `
+            <div class="print-header">
+              <div class="print-title">日別勤怠記録：${escapeHtml(s.staffName)}（${escapeHtml(ym)}）</div>
+              <div class="print-meta">出勤 ${s.days}日 / 総実働 ${minToHM(s.workMin)} / 残業 ${minToHM(s.overtimeMin)}</div>
+            </div>
+          `;
+          if (s.records.length === 0) {
+            html += `<p style="font-size:11px; color:#666;">この月の打刻記録はありません。</p>`;
+          } else {
+            const ascRecords = s.records.slice().sort((a, b) => (a.date > b.date ? 1 : -1));
+            html += `
+              <table class="print-table">
+                <thead>
+                  <tr>
+                    <th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th><th>実働</th><th>残業</th><th>プロジェクト工数</th>
+                    ${includeMemo ? '<th>区分</th><th>メモ</th>' : ''}
+                  </tr>
+                </thead>
+                <tbody>
+            `;
+            ascRecords.forEach(r => {
+              const dInfo = formatDateInfo(r.date);
+              html += `
+                <tr class="${dInfo.isRed ? 'row-holiday' : ''}">
+                  <td class="date-cell">${escapeHtml(dInfo.label)}</td>
+                  <td>${escapeHtml(r.clockIn || '-')}</td>
+                  <td>${escapeHtml(r.clockOut || '-')}</td>
+                  <td>${minToHM(calcBreakMinutes(r))}</td>
+                  <td>${minToHM(r.workMinutes)}</td>
+                  <td>${minToHM(r.overtimeMinutes)}</td>
+                  <td>${escapeHtml(r.projectText || '-')}</td>
+                  ${includeMemo ? `<td>${escapeHtml(r.manualFlag || '')}</td><td>${escapeHtml(r.memo || '')}</td>` : ''}
+                </tr>
+              `;
+            });
+            html += `</tbody></table>`;
+          }
+        });
+      }
+
+      document.getElementById('print-area').innerHTML = html;
+      closeModal('pdf-modal');
+      setTimeout(() => window.print(), 100);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[s]));
+    }
+  </script>
+</body>
+</html>
